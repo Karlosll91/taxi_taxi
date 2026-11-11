@@ -72,19 +72,32 @@ El Poblado rises steeply from the river in the west to the hills in the east. Th
 
 OpenStreetMap data is ODbL-licensed, so the credits screen must attribute it. If the export is not practical, the fallback is to draw the same graph by hand from memory of the layout; the game code does not change.
 
-Buildings are procedural low-poly blocks with a few variants per zone (towers on the Milla de Oro, low restaurants in Provenza, houses and apartment blocks in Las Lomas). About 8 landmarks get hand-made models.
+Buildings are procedural volumes dressed with tiling facade textures, with a few variants per zone (glass and concrete towers on the Milla de Oro, low restaurants in Provenza, brick apartment blocks and houses in Las Lomas). About 8 landmarks get hand-made models.
+
+### Art direction
+
+Textured and semi-realistic: believable materials and lighting, real-world proportions, but not photoreal.
+
+- **Materials**: physically based (albedo, normal, roughness). Exposed red brick, the look of most Medellín apartment blocks, is the dominant facade material.
+- **Facades**: a shared texture atlas of modular facade tiles (ground-floor shopfronts, window bays, balconies, roof edges) applied to procedural volumes. Night-lit windows come from an emissive layer.
+- **Roads**: asphalt with painted lane markings, kerbs, patched repairs, and wet-look variation on the roughness map.
+- **Vegetation**: El Poblado is very green. Trees are instanced, with cheap cross-plane versions at distance.
+- **Lighting**: one sun with cascaded shadows, an image-based sky for ambient light and reflections, filmic tone mapping. Late-afternoon light is the default; time of day is fixed per shift.
+- **Vehicles**: glTF models of about 5–8k triangles for the taxi and 1–3k for traffic, with a clear-coat paint material on the taxi.
+- **Sources**: CC0 texture and model libraries (such as Poly Haven and ambientCG) plus custom work for the taxi and landmarks. Every asset's licence is recorded in a credits file.
 
 ## 3. Technology
 
 | Area | Choice | Why |
 |---|---|---|
 | Language / build | TypeScript + Vite | Fast iteration, static output |
-| Rendering | Three.js (WebGL2) | Mature, broad phone support. WebGPU is not needed for this style |
+| Rendering | Three.js (WebGL2) with PBR materials | Mature, broad phone support |
+| Assets | glTF with Draco/Meshopt geometry and KTX2 (Basis) textures | Compressed textures stay compressed in GPU memory, which is what keeps textured scenes viable on phones |
 | Vehicle physics | Custom arcade model | Predictable, tunable feel and far cheaper on phones than a general physics engine |
 | Collision | 2D shapes on the road plane plus terrain height sampling | Buildings and cars are boxes; a spatial grid keeps checks cheap |
 | UI / HUD | HTML and CSS over the canvas | Crisp text, easy Spanish strings, accessible menus |
 | Audio | Web Audio API | Synthesised engine sound, CC0 effects, original music loop |
-| Storage | `localStorage` | High scores and settings; no backend |
+| Storage | `localStorage` | High scores and settings are local to the device; there is no backend or online leaderboard |
 | Hosting | GitHub Pages via GitHub Actions | Free, static, deploys from this repo |
 | Tests | Vitest for game logic, Playwright for a boot-and-drive smoke test | |
 
@@ -128,9 +141,11 @@ Touch details:
 ## 5. Performance targets
 
 - 60 fps on a mid-range phone from the last four years; 30 fps minimum on low-end devices.
-- Under 150 draw calls: instanced buildings, traffic, and props; merged static road geometry.
-- Initial download under 5 MB compressed.
-- Three quality levels (*Baja / Media / Alta*) controlling pixel ratio cap, shadow quality, draw distance, and traffic density. The level is auto-selected from a short benchmark on first load and can be changed in settings.
+- Under 200 draw calls: instanced props, trees, and traffic; buildings merged per city block and sharing atlas materials; merged static road geometry.
+- Texture memory under 150 MB on *Baja*, using KTX2 and atlases; no texture larger than 2048 px on phones.
+- Initial download under 8 MB to reach the menu and start driving; the rest (landmarks, distant zones, music) streams in, for about 25 MB total.
+- Two levels of detail for buildings, trees, and vehicles.
+- Three quality levels (*Baja / Media / Alta*) controlling pixel ratio cap, texture resolution, normal maps, shadow quality, draw distance, and traffic density. *Baja* drops normal maps and real-time shadows in favour of a blob shadow under each car. The level is auto-selected from a short benchmark on first load and can be changed in settings.
 - Distance fog hides the draw limit and suits the valley haze.
 
 ## 6. Project structure
@@ -142,12 +157,13 @@ src/
   input/             keyboard, mouse, touch -> shared input state
   vehicle/           arcade car physics, camera
   world/             road graph, terrain, buildings, landmarks
+  render/            lighting, materials, quality levels, asset loading
   traffic/           traffic cars, pedestrians
   mission/           passengers, destinations, clocks, scoring
   ui/                HUD, menus, touch controls
   audio/
   i18n/es.ts
-tools/               OSM-to-road-graph script
+tools/               OSM-to-road-graph script, texture and model compression
 public/assets/       models, textures, sounds
 tests/
 ```
@@ -160,13 +176,14 @@ Each milestone ends with something playable and deployed.
 |---|---|---|---|
 | 0 | Skeleton | Vite + TypeScript + Three.js project, CI, GitHub Pages deploy | A lit scene loads from the public URL on desktop and phone |
 | 1 | Driving | Taxi on a flat test grid, chase camera, all three input methods | The taxi is fun to drive and drift with keyboard, mouse, and touch |
-| 2 | Map | Road graph, terrain with slope, procedural buildings, collision | The player can drive from the metro station up to Las Lomas without falling through anything |
-| 3 | Taxi loop | Passengers, destinations, arrow, clocks, fares, results screen | A full shift can be played from menu to rank |
-| 4 | Living city | Traffic, pedestrians, tips, combos, landmarks | Near-misses and crashes affect score; landmarks are recognisable |
-| 5 | Polish | Audio, Spanish UI pass, settings, quality levels, high scores, tutorial prompts | A new player on a phone understands the game without instructions |
-| 6 | Release | Performance pass, device testing, installable PWA, credits | Performance targets are met on the test devices |
+| 2 | Map | Road graph, terrain with slope, untextured building volumes, collision | The player can drive from the metro station up to Las Lomas without falling through anything |
+| 3 | Look | Asset pipeline, facade atlas, road and terrain materials, lighting, taxi model, quality levels | One finished city block around Parque Lleras holds 60 fps on the test phone at *Media* |
+| 4 | Taxi loop | Passengers, destinations, arrow, clocks, fares, results screen | A full shift can be played from menu to rank |
+| 5 | Living city | Traffic, pedestrians, tips, combos, landmark models, art applied to the whole map | Near-misses and crashes affect score; landmarks are recognisable |
+| 6 | Polish | Audio, Spanish UI pass, settings, local high scores, tutorial prompts | A new player on a phone understands the game without instructions |
+| 7 | Release | Performance pass, device testing, installable PWA, credits | Performance targets are met on the test devices |
 
-Milestone 1 carries the most risk for fun, and milestone 2 the most risk for effort. Driving feel is tuned on a test grid before any map work so that the map is built to suit the car.
+Milestone 1 carries the most risk for fun, and milestones 2 and 3 the most risk for effort. Driving feel is tuned on a test grid before any map work so that the map is built to suit the car. Milestone 3 proves the look on a single block within the phone budget before the art is spread across the map.
 
 ## 8. Risks
 
@@ -174,15 +191,17 @@ Milestone 1 carries the most risk for fun, and milestone 2 the most risk for eff
 |---|---|
 | Driving does not feel good | Tune in milestone 1 with a live tuning panel before building anything on top |
 | Map takes too long | Start with a 1 × 1 km core (Parque Lleras to Avenida El Poblado), expand only after the loop is fun |
-| Phone performance | Draw-call budget from day one; test on a real phone at every milestone |
+| Phone performance with textured art | Draw-call and texture-memory budgets from day one; the single-block proof in milestone 3; test on a real phone at every milestone |
+| Art workload | Modular facade atlas and CC0 libraries instead of per-building art; custom modelling limited to the taxi and about 8 landmarks |
+| Semi-realistic look reads as cheap rather than stylised | Invest in lighting, tone mapping, and material consistency before adding detail |
 | Touch steering feels imprecise | Auto-accelerate default, steering assist that eases toward the road direction, adjustable sensitivity |
 | Steep terrain breaks traffic or physics | Cap road gradient when flattening roads into the heightfield |
 
-## 9. Decisions needed
+## 9. Decisions
 
-These have a recommended default; the plan proceeds with the default unless changed.
-
-1. **Map fidelity**: stylised and recognisable (recommended) or street-accurate. Accurate costs much more and usually plays worse.
-2. **Art style**: bright low-poly with flat colours (recommended) or textured semi-realistic. Low-poly is faster to make and runs better on phones.
-3. **Online features**: local high scores only (recommended for the first release) or an online leaderboard, which needs a backend.
-4. **Hosting**: GitHub Pages from this repository (recommended) or another host.
+| Decision | Choice | Status |
+|---|---|---|
+| Art style | Textured, semi-realistic | Decided |
+| Scores | Local high scores only, no backend | Decided |
+| Map fidelity | Stylised and recognisable rather than street-accurate | Default, open to change |
+| Hosting | GitHub Pages from this repository | Default, open to change |
