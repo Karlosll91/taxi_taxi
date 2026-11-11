@@ -146,7 +146,9 @@ export class Car {
           // Swing the nose along the wall so the car does not stick to it.
           const tx = fx - fn * hit.nx;
           const tz = fz - fn * hit.nz;
-          if (Math.hypot(tx, tz) > 0.15) this.heading += angDiff(Math.atan2(tx, tz), this.heading) * Math.min(1, -vn * 0.07);
+          const along = Math.hypot(tx, tz) > 0.15 ? Math.atan2(tx, tz) : this.heading + (this.steer > 0 ? -1.2 : 1.2);
+          // A hard hit turns the nose at once; holding the throttle against a wall keeps turning it.
+          this.heading += angDiff(along, this.heading) * Math.min(1, -vn * 0.07 + (input.throttle > 0 ? 2.5 * dt : 0));
         }
       }
     }

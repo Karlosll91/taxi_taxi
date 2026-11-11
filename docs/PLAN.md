@@ -205,3 +205,34 @@ Milestone 1 carries the most risk for fun, and milestones 2 and 3 the most risk 
 | Scores | Local high scores only, no backend | Decided |
 | Map fidelity | Stylised and recognisable rather than street-accurate | Default, open to change |
 | Hosting | GitHub Pages from this repository | Default, open to change |
+
+## 10. Implementation status
+
+The first playable version is implemented. It covers milestones 0 to 6 in scope, with the differences below.
+
+### Done
+
+- Driving with keyboard, mouse, and touch; drift, jumps over ramps, forgiving crashes, reset onto the road.
+- A 1.8 × 1.8 km map with 26 named streets, sloped terrain, about 8 landmarks, procedural buildings in five zones, trees, river, and metro viaduct with a moving train.
+- Passenger loop with trip classes, clocks, fares in pesos, tips and combos, ranks, three game modes, and local high scores.
+- Traffic (cars, taxis, buses) that follows the road graph, yields, and can be knocked aside; pedestrians on the sidewalks.
+- Spanish menus, HUD, heading-up minimap, guidance arrow, passenger speech lines.
+- Three quality levels with automatic step-down when the frame rate is low.
+- Unit tests for scoring, road network, collisions, car physics, and traffic; CI and GitHub Pages workflow.
+
+### Different from the plan
+
+| Plan | What was built | Why |
+|---|---|---|
+| CC0 texture libraries and glTF models, compressed with KTX2 | All textures are painted on canvases at load time and all models are built in code | No asset files to license, download, or compress; the whole game is under 200 kB compressed |
+| Road graph seeded from OpenStreetMap | Road graph written by hand | Easier to tune for play; no attribution requirement |
+| Cascaded shadows | One shadow map that follows the taxi | Much cheaper on phones; shadows only matter near the camera |
+| Hand-made landmark models | Landmarks assembled from simple shapes (church, parks, fountain, metro station, malls, clinic, university) | Kept within code-built geometry |
+| Motorbikes, delivery riders, chiva | Cars, taxis, and buses only | Two-wheelers need rider models and their own behaviour |
+| Music loop | Sound effects and engine only | Synthesised music was not good enough to include |
+| Installable PWA | Not done | Left for the release milestone |
+
+### Not verified
+
+- Performance on real phones. The game was tested in a desktop-class headless browser and with an emulated phone screen and touch input, not on phone hardware, so the frame-rate targets in section 5 are unconfirmed.
+- Driving feel and game balance (clock bonuses, fares, traffic density) have had automated checks only and need play-testing.

@@ -25,6 +25,7 @@ export class Input {
   private touchSteer = 0;
   private steerPointer = -1;
   private steerStart = 0;
+  private stopTimer = 0;
   private held = { gas: false, brake: false, drift: false };
 
   constructor(canvas: HTMLCanvasElement, private touchRoot: HTMLElement) {
@@ -125,7 +126,8 @@ export class Input {
     this.touchRoot.classList.toggle('auto', v);
   }
 
-  update() {
+  /** `forward` is the taxi's forward speed, used so a held touch brake stops before it reverses. */
+  update(dt: number, forward: number) {
     const s = this.state;
     const k = this.keys;
     if (this.mode === 'keyboard') {
@@ -141,7 +143,10 @@ export class Input {
       s.handbrake = (this.mouseButtons & 4) !== 0 || k.has('ShiftLeft') || k.has('ShiftRight');
     } else {
       s.steer = Math.sign(this.touchSteer) * Math.pow(Math.abs(this.touchSteer), 1.3);
-      s.brake = this.held.brake ? 1 : 0;
+      // Holding the brake stops the taxi and keeps it still for a moment; keep holding to reverse.
+      if (!this.held.brake || forward > 1) this.stopTimer = 0;
+      else this.stopTimer += dt;
+      s.brake = this.held.brake && (forward > 1 || this.stopTimer > 0.6) ? 1 : 0;
       s.throttle = this.held.brake ? 0 : this.autoAccel || this.held.gas ? 1 : 0;
       s.handbrake = this.held.drift;
     }

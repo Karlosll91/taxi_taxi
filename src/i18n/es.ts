@@ -27,9 +27,9 @@ export const es = {
   help: {
     goal: 'Recoge pasajeros en los círculos de luz, llévalos a su destino antes de que se acabe el tiempo y gana propinas con adelantamientos ajustados, derrapes y saltos.',
     rows: [
-      ['Girar', 'A / D o ← / →', 'Mover el puntero', 'Arrastrar a la izquierda'],
+      ['Girar', 'A / D o ← / →', 'Mover el puntero', 'Arrastrar en el lado izquierdo'],
       ['Acelerar', 'W o ↑', 'Botón izquierdo', 'Automático o botón'],
-      ['Frenar / reversa', 'S o ↓', 'Botón derecho', 'Botón Frenar'],
+      ['Frenar / reversa', 'S o ↓', 'Botón derecho', 'Botón Frenar (mantener para reversa)'],
       ['Derrape', 'Espacio', 'Botón central o Shift', 'Botón Derrape'],
       ['Volver a la vía', 'R', 'Botón en pantalla', 'Botón en pantalla'],
       ['Pausa', 'Esc o P', 'Botón en pantalla', 'Botón en pantalla'],

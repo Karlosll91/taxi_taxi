@@ -111,6 +111,8 @@ export class Game {
     this.input.onReset = () => this.resetToRoad();
     this.input.onHorn = () => this.state === 'playing' && this.audio.play('horn');
     document.addEventListener('visibilitychange', () => document.hidden && this.pause());
+    // A phone turned upright shows the "rotate" prompt; pause underneath it.
+    addEventListener('resize', () => this.input.isTouchDevice && matchMedia('(orientation: portrait)').matches && this.pause());
 
     this.placeAtStart();
     this.applySettings();
@@ -216,7 +218,7 @@ export class Game {
     const playing = this.state === 'playing';
 
     if (this.state !== 'paused') {
-      this.input.update();
+      this.input.update(dt, this.car.forward);
       if (playing) {
         const n = Math.ceil(dt / PHYS_DT);
         for (let i = 0; i < n; i++) {
@@ -359,7 +361,7 @@ export class Game {
       cam.position.y += (Math.random() - 0.5) * this.shake;
       this.shake *= Math.exp(-7 * dt);
     }
-    const fov = 62 + Math.min(16, speed * 0.4);
+    const fov = 62 + Math.min(11, speed * 0.3);
     if (Math.abs(fov - cam.fov) > 0.05) {
       cam.fov += (fov - cam.fov) * damp(4, dt);
       cam.updateProjectionMatrix();

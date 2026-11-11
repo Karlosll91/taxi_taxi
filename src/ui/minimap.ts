@@ -47,7 +47,8 @@ export class Minimap {
     c.save();
     c.clearRect(0, 0, S, S);
     c.beginPath();
-    c.roundRect(0, 0, S, S, 26);
+    if (c.roundRect) c.roundRect(0, 0, S, S, 26);
+    else c.rect(0, 0, S, S);
     c.clip();
     c.fillStyle = '#26303a';
     c.fillRect(0, 0, S, S);
